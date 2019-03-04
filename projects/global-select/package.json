@@ -1,0 +1,9 @@
+{
+  "name": "global-select",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "6.0.6",
+    "@angular/core": "6.0.6",
+    "@angular/animations": "6.0.6"
+  }
+}
