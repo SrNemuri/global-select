@@ -65,7 +65,7 @@ export class AppComponent {
       focused: false
     },
     {
-      destination: false,
+      destination: 5,
       value: '3692073',
       display: 'Airy Ahmad Yani Km 7,6 Banjarmasin',
       key: '3692073',
@@ -75,7 +75,7 @@ export class AppComponent {
       focused: false
     },
     {
-      destination: false,
+      destination: 'HOLA',
       value: '3692263',
       display: 'Airy Bandara Ahmad Yani Semarang',
       key: '3692263',
@@ -85,7 +85,7 @@ export class AppComponent {
       focused: false
     },
     {
-      destination: false,
+      destination: 1,
       value: '3692092',
       display: 'Airy Grage City Ahmad Yani 39 Cirebon',
       key: '3692092',
@@ -184,7 +184,8 @@ export class AppComponent {
           return `${item.display} - [hotel in ${item.location.city} - (${
             item.location.country
           }) - (${item.value})]`;
-        }
+        },
+        limit: 2
       }
     ],
     [
@@ -193,7 +194,8 @@ export class AppComponent {
         title: 'Destinations',
         display: function(item) {
           return `${item.display} - (${item.value})`;
-        }
+        },
+        limit: 2
       }
     ],
     [
@@ -202,15 +204,18 @@ export class AppComponent {
         title: 'Prueba',
         display: function(item) {
           return `${item.display} - (${item.value})`;
-        }
+        },
+        limit: 2
       }
     ],
     [
       false,
       {
+        title: false,
         display: function(item) {
           return `${item.display} - (${item.value})`;
-        }
+        },
+        limit: 2
       }
     ]
   ]);

@@ -1,4 +1,4 @@
-<div (document:click)="decideClosure($event)" class="dropdown-root">
+<div (document:click)="decideClosure($event)" class="dropdown-root" #globalSelectElement>
   <div [ngClass]="{ 'white-background': !disabled }">
 
     <div *ngFor="let item of selectedItems; let i = index" class="selected-item" [ngClass]="{ 'tb-removed': item.toBeRemoved }">
@@ -9,13 +9,14 @@
     </div>
 
     <input type="text" id="inputSearch" [(ngModel)]="searchValue" #inputSearch (keyup)="onKeyupFilter(inputSearch.value, $event)"
-      (keydown)="selectActionByKey($event)" class="form-control w-100" placeholder="..." [disabled]="!itemData || disabled" />
+      class="form-control w-100" placeholder="..." [disabled]="!itemData || disabled" autocomplete="off"/>
   </div>
   <div class="white-background">
     <button (click)="log()">LOG</button>
     <div #dropdownElem class="custom-dropdown hidden" [@dropdown]="hiddenDropdown">
-      <div *ngFor="let collection of collections">
-        <div class="dropdown-item tit pb-1" *ngIf="collection.title">
+      <ng-container *ngFor="let collection of collections; let ci = index">
+        <div class="dropdown-item tit pb-1" >
+            <!-- *ngIf="collection.title" -->
           <div class="media d-flex align-items-center pb-2">
             <div class="media-left d-flex align-items-center">
               <span class="seller-ico-bg-color"></span>
@@ -25,12 +26,14 @@
             </div>
           </div>
         </div>
-        <ng-container *ngFor="let item of collection.list">
-          <span (click)="addItem(item)" (keydown)="addItem(item)" [ngClass]="{ focused: item.focused }" class="dropdown-item d-flex custom-dropdown-item">{{
-            item.disp }}</span>
-        </ng-container>
-        <span class="dropdown-item d-flex ml-auto text-help" *ngIf="collection.list?.length === 0">No results</span>
-      </div>
+
+          <ng-container *ngFor="let item of collection.list; let li = index">
+            <span tabindex="0" (click)="addItem(item)" (keydown)="addItem(item)" [ngClass]="{ focused: !!item.focused }"
+              class="dropdown-item custom-dropdown-item">{{ item.disp }} <input type="hidden" [value]="item[itemData.identifyBy] || (ci + '_' + li)"> </span>
+          </ng-container>
+
+        <span class="dropdown-item ml-auto text-help" *ngIf="collection.list?.length === 0">No results</span>
+      </ng-container>
     </div>
   </div>
 </div>
