@@ -1,6 +1,30 @@
 {
-  "name": "global-selector-container",
-  "version": "0.0.0",
+  "name": "global-select",
+  "version": "0.0.1",
+  "description": "A grouping selector",
+  "author": "Alex Baena, TravelgateX employee",
+  "keywords": [
+    "angular",
+    "selector",
+    "typescript",
+    "javascript",
+    "component",
+    "angular-component",
+    "bootstrap",
+    "grouping",
+    "grouping-selector",
+    "filter",
+    "filter-selector"
+  ],
+  "homepage": "https://github.com/SrNemuri/global-select",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SrNemuri/global-select.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SrNemuri/global-select/issues"
+  },
+  "private": false,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -9,7 +33,6 @@
     "lint": "ng lint",
     "e2e": "ng e2e"
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "6.0.6",
     "@angular/common": "6.0.6",
