@@ -60,7 +60,7 @@ input#inputSearch:focus {
   background-color: #c7ced8;
 }
 
-.custom-dropdown-item.focused {
+.custom-dropdown-item:focus {
   background-color: #c7ced8;
 }
 
@@ -71,4 +71,13 @@ input#inputSearch:focus {
 
 .white-background {
   background-color: white;
+}
+
+.arrow-scroll {
+  height: 20px;
+  background-color: #AAA1;
+  position: sticky;
+  bottom: 0px;
+  color: grey;
+  text-align: center;
 }

@@ -7,30 +7,30 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   info = [
-    {
-      destination: 1,
-      value: '1890700',
-      display: 'AB Alojamientos Puerto Madryn',
-      key: '1890700',
-      location: {
-        country: 'AR',
-        city: 'Puerto Madryn',
-        __typename: 'Location'
-      },
-      disp:
-        'AB Alojamientos Puerto Madryn - [hotel in Puerto Madryn - (AR) - (1890700)]',
-      focused: false
-    },
-    {
-      destination: 2,
-      value: '3307084',
-      display: 'Ac Hotel By Marriott Madison Downtown',
-      key: '3307084',
-      location: { country: 'US', city: 'Madison - Wi', __typename: 'Location' },
-      disp:
-        'Ac Hotel By Marriott Madison Downtown - [hotel in Madison - Wi - (US) - (3307084)]',
-      focused: false
-    },
+    // {
+    //   destination: 1,
+    //   value: '1890700',
+    //   display: 'AB Alojamientos Puerto Madryn',
+    //   key: '1890700',
+    //   location: {
+    //     country: 'AR',
+    //     city: 'Puerto Madryn',
+    //     __typename: 'Location'
+    //   },
+    //   disp:
+    //     'AB Alojamientos Puerto Madryn - [hotel in Puerto Madryn - (AR) - (1890700)]',
+    //   focused: false
+    // },
+    // {
+    //   destination: 2,
+    //   value: '3307084',
+    //   display: 'Ac Hotel By Marriott Madison Downtown',
+    //   key: '3307084',
+    //   location: { country: 'US', city: 'Madison - Wi', __typename: 'Location' },
+    //   disp:
+    //     'Ac Hotel By Marriott Madison Downtown - [hotel in Madison - Wi - (US) - (3307084)]',
+    //   focused: false
+    // },
     {
       destination: 3,
       value: '81925',
@@ -95,9 +95,9 @@ export class AppComponent {
       focused: false
     },
     {
-      destination: false,
+      destination: '',
       value: '3322276',
-      display: 'Airy Langkai Ahmad Yani 51 Palangkaraya',
+      display: 'EMPTY DEST 1',
       key: '3322276',
       location: {
         country: 'ID',
@@ -109,9 +109,9 @@ export class AppComponent {
       focused: false
     },
     {
-      destination: false,
+      destination: '',
       value: '3323212',
-      display: 'Airy Singkawang Barat Ahmad Yani Graha Wahana',
+      display: 'EMPTY DEST 2',
       key: '3323212',
       location: { country: 'ID', city: 'Singkawang', __typename: 'Location' },
       disp:
@@ -212,6 +212,16 @@ export class AppComponent {
       false,
       {
         title: false,
+        display: function(item) {
+          return `${item.display} - (${item.value})`;
+        },
+        limit: 2
+      }
+    ],
+    [
+      '',
+      {
+        title: 'Empty',
         display: function(item) {
           return `${item.display} - (${item.value})`;
         },

@@ -1,8 +1,4 @@
-export interface GroupConfig {
-  title: string;
-  display: any;
-  limit: number;
-}
+import { GroupConfig } from './group-config';
 
 export interface ItemData {
   items: any[];

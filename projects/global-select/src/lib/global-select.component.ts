@@ -18,8 +18,7 @@ import {
   transition,
   keyframes
 } from '@angular/animations';
-import { ItemData } from './interfaces/item-data';
-import { SearchGlobalConfig } from './interfaces/search-global-config';
+import { ItemData, SearchGlobalConfig, Collection } from './interfaces';
 import { getDisabled } from './utils/functions';
 
 @Component({
@@ -110,16 +109,15 @@ import { getDisabled } from './utils/functions';
 export class GlobalSelectComponent implements OnChanges, OnInit {
   // Data variables
   searchValue: string;
+  selectedItems = [];
+  availableItems = [];
+  collections: Collection[] = [];
+  getDisabled = getDisabled;
 
   @Input() itemData: ItemData;
   @Input() disabled: boolean;
   // Component configurations
   @Input() config: SearchGlobalConfig;
-
-  selectedItems = [];
-  availableItems = [];
-  collections = [];
-  getDisabled = getDisabled;
 
   // Animation switches
   hiddenDropdown = 'yes';
@@ -135,6 +133,13 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   @ViewChild('dropdownElem') dropdownElem: ElementRef;
   @ViewChild('globalSelectElement') globalSelectElement: ElementRef;
 
+  //Focus management
+  focusedListElement: any;
+  focusedSelectedElement: any;
+
+  //Behaviour control
+  isFiltering: boolean;
+
   private configurations = {
     closeOnAdd: true,
     clearOnAdd: true,
@@ -147,12 +152,12 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   @HostListener('document:keydown', ['$event']) detectKeyboardEvent(
     event: KeyboardEvent
   ) {
-    // console.log(this.globalSelectElement.nativeElement.querySelectorAll(':focus')[0])
-    // if (this.globalSelectElement.nativeElement.querySelectorAll(':focus')[0]) {
-    //   console.log('focus');
-    // } else {
-    //   console.log('no focus');
-    // }
+    const innerElementFocused = this.globalSelectElement.nativeElement.querySelectorAll(
+      ':focus'
+    )[0];
+    if (!innerElementFocused) {
+      return;
+    }
 
     const validEvents = [
       'ArrowUp',
@@ -163,36 +168,22 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       'Backspace'
     ];
 
-    // const listNodes = this.dropdownElem.nativeElement.children;
     const listNodes = this.dropdownElem.nativeElement.querySelectorAll(
       'span.custom-dropdown-item'
     );
-    // console.log('span.custom-dropdown-item',this.dropdownElem.nativeElement.querySelectorAll('span.custom-dropdown-item'));
 
     if (!validEvents.includes(event.key) || listNodes.length === 0) {
       return;
     }
-    // custom-dropdown-item
-    // console.log('this.dropdownElem.nativeElement', this.dropdownElem.nativeElement);
-    // console.log(
-    //   'this.globalSelectElement.nativeElement',
-    //   this.globalSelectElement.nativeElement.querySelectorAll(':focus')
-    // );
-
-    // console.log('listNodes', listNodes, Array.from(listNodes));
 
     const selectedElementIndex = Array.from(listNodes).findIndex(
       c => c === document.activeElement
     );
 
-    // console.log('activeElement', document.activeElement);
-
-    // console.log('selectedElementIndex', selectedElementIndex);
-
     if (selectedElementIndex === -1) {
-      if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+      if (event.key === 'ArrowUp') {
         listNodes[listNodes.length - 1].focus();
-      } else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+      } else if (event.key === 'ArrowDown') {
         listNodes[0].focus();
       }
     } else {
@@ -203,15 +194,6 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
         } else {
           listNodes[selectedElementIndex - 1].focus();
         }
-      } else if (event.key === 'ArrowLeft') {
-        // Fast backwards
-        if (selectedElementIndex === 0) {
-          listNodes[listNodes.length - 1].focus();
-        } else if (selectedElementIndex < 10) {
-          listNodes[0].focus();
-        } else {
-          listNodes[selectedElementIndex - 10].focus();
-        }
       } else if (event.key === 'ArrowDown') {
         // Forward
         if (listNodes.length - 1 === selectedElementIndex) {
@@ -219,16 +201,12 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
         } else {
           listNodes[selectedElementIndex + 1].focus();
         }
-      } else if (event.key === 'ArrowRight') {
-        // Fast forward
-        if (listNodes.length - 1 === selectedElementIndex) {
-          listNodes[0].focus();
-        } else if (listNodes.length - 1 < selectedElementIndex + 10) {
-          listNodes[selectedElementIndex + 10].focus();
-        } else {
-          listNodes[selectedElementIndex + 10].focus();
-        }
       }
+    }
+
+    // ENTER KEY
+    if (event.key === 'Enter' && this.focusedListElement) {
+      this.addItem(this.focusedListElement);
     }
   }
 
@@ -237,6 +215,13 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   ngOnInit() {
     window['a'] = this;
     this.configureComponent();
+  }
+
+  manageKD(event) {
+    if (event.key === 'Backspace') {
+      // const;
+      // console.log('Backspace', event);
+    }
   }
 
   configureComponent() {
@@ -254,6 +239,14 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     if (this.config.onfocus) {
       this.configurations.searchOnFocus = this.config.onfocus === 'search';
     }
+  }
+
+  focusItem(item) {
+    this.focusedListElement = item;
+  }
+
+  blurItem() {
+    this.focusedListElement = undefined;
   }
 
   decideClosure(event) {
@@ -275,13 +268,9 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     }
   }
 
-  log() {
-    console.log(this.collections);
-  }
-
   ngOnChanges(changes) {
     if ('itemData' in changes) {
-      this.displayItems();
+      this.filterAvailableItems();
     }
   }
 
@@ -293,7 +282,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       event.key !== 'ArrowDown' &&
       event.key !== 'Enter'
     ) {
-      this.displayItems();
+      this.filterAvailableItems();
     } else if (
       !searchValue ||
       (searchValue && searchValue.length < 3 && event.key === 'Backspace')
@@ -305,35 +294,28 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   // /**
   //  * Filters
   //  */
-  displayItems() {
+  filterAvailableItems() {
     if (this.selectedItems.length) {
-      console.log(this.selectedItems)
-      if (
-        this.itemData.incompatibility &&
-        this.selectedItems.find(si => si.destination) ||
-        this.selectedItems.length >= 5
-      ) {
-        this.availableItems = [];
-        this.closeDropdown();
-        return;
-      } else {
-        const selectedValues = this.selectedItems.map(si => si[this.itemData.valueProp]);
-        console.log('selectedValues', selectedValues);
-        console.log(
-          (this.availableItems = [
-            ...this.itemData.items.filter(
-              item => !selectedValues.includes(item[this.itemData.valueProp])
-            )
-          ])
-        );
-        this.availableItems = [
-          ...this.itemData.items.filter(
-            item => !selectedValues.includes(item[this.itemData.valueProp])
-          )
-        ];
-      }
+      const selectedValues = this.selectedItems.map(
+        si => si[this.itemData.valueProp]
+      );
+
+      this.availableItems = [
+        ...this.itemData.items.filter(item => {
+          const alreadyIn = selectedValues.includes(
+            item[this.itemData.valueProp]
+          );
+          let compatible = true;
+          if (this.itemData.incompatibility) {
+            compatible = !!this.selectedItems.find(
+              si => si[this.itemData.groupBy] === item[this.itemData.groupBy]
+            );
+          }
+          return !alreadyIn && compatible;
+        })
+      ];
     } else {
-      console.log('reorg');
+      // console.log('no selected items');
       this.availableItems = [...this.itemData.items];
     }
 
@@ -342,6 +324,9 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       (!!this.searchValue && this.availableItems.length > 0)
     ) {
       if (this.itemData.grouping) {
+        // console.log('selectedItems', this.selectedItems);
+        // console.log((this.selectedItems[0] || {})[this.itemData.groupBy] || '');
+
         this.filterItems();
       } else {
         this.collections = [{ list: this.availableItems }];
@@ -356,22 +341,63 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
    * Filters items if grouping parameter is set to true
    */
   filterItems() {
+    // key bloqueante
     const collections = [];
-    const setArray = Array.from(this.itemData.groupConfig.keys());
-    if (setArray.length) {
-      for (let i = 0; i < setArray.length; i++) {
-        const groupConfig = this.itemData.groupConfig.get(setArray[i]);
+    const itemKeysConfiguration = Array.from(this.itemData.groupConfig.keys());
+
+    const groupBy = (this.selectedItems[0] || {})[this.itemData.groupBy];
+    this.isFiltering = groupBy !== undefined;
+
+    if (itemKeysConfiguration.length) {
+      for (let i = 0; i < itemKeysConfiguration.length; i++) {
+        const groupConfig = this.itemData.groupConfig.get(
+          itemKeysConfiguration[i]
+        );
+
+        // console.log(
+        //   'groupConfig',
+        //   groupConfig,
+        //   '\nitemKeysConfiguration[i]',
+        //   itemKeysConfiguration[i]
+        // );
+        // Jumps to next iteration if there is anything selected not matching current identifier and if incompatibility is set to true
+
+        if (
+          this.isFiltering &&
+          this.itemData.incompatibility &&
+          groupBy !== itemKeysConfiguration[i]
+        ) {
+          continue;
+        }
+
+        // We check if we reached the limit
+        const limitReached =
+          groupConfig.limit <=
+          this.selectedItems.filter(
+            si => si[this.itemData.groupBy] === itemKeysConfiguration[i]
+          ).length;
 
         if (groupConfig) {
-          const collection = {
-            title: groupConfig.title || 'Not defined',
-            list: this.availableItems.filter(ai => {
-              if (ai[this.itemData.groupBy] === setArray[i]) {
-                ai['disp'] = groupConfig.display(ai);
-                return true;
-              }
-            })
-          };
+          let collection;
+          if (!limitReached) {
+            collection = {
+              title: groupConfig.title || 'Not defined',
+              list: this.availableItems.filter(ai => {
+                if (ai[this.itemData.groupBy] === itemKeysConfiguration[i]) {
+                  ai['disp'] = groupConfig.display(ai);
+                  return true;
+                }
+              })
+            };
+          } else {
+            collection = {
+              title: groupConfig.title || 'Not defined',
+              list: [],
+              warning: 'Selection limit reached'
+            };
+          }
+          // if (collection.list.length) {
+          // }
           collections.push(collection);
         }
       }
@@ -396,7 +422,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     item.focused = false;
     const clone = JSON.parse(JSON.stringify(item));
     this.selectedItems.push(clone);
-    this.displayItems();
+    this.filterAvailableItems();
     if (this.configurations.closeOnAdd) {
       this.closeDropdown();
       this.dropdownElem.nativeElement.scrollTop = 0;
@@ -410,8 +436,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   }
 
   addItemWithEnter() {
-    console.log('addItemWithEnter');
-    const auxArray = [].concat(this.availableItems);
+    const auxArray = [...this.availableItems];
     const item = auxArray.find(a => a.focused);
     if (item) {
       this.addItem(item);
@@ -420,7 +445,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
 
   removeItem(index) {
     this.selectedItems.splice(index, 1);
-    this.displayItems();
+    this.filterAvailableItems();
   }
 
   /**
@@ -451,7 +476,10 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
    */
   startRemoving(target) {
     if (this.selectedItems.length) {
-      if (!target[this.itemData.valueProp] && !this.selectedItems.find(si => si.toBeRemoved)) {
+      if (
+        !target[this.itemData.valueProp] &&
+        !this.selectedItems.find(si => si.toBeRemoved)
+      ) {
         this.selectedItems[this.selectedItems.length - 1].toBeRemoved = true;
       } else if (this.selectedItems.find(si => si.toBeRemoved)) {
         this.removeItem(this.selectedItems.length - 1);
@@ -466,84 +494,4 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       }
     }
   }
-
-  // /**
-  //  * Focuses items from the dropdown using the arrow keys
-  //  * @param param
-  //  */
-  // focusItemFromList(param) {
-  //   const auxArray = [].concat(this.availableItems);
-  //   if (this.hiddenDropdown === 'no') {
-  //     const focusedIndex = auxArray.findIndex(aux => aux.focused);
-  //     // If a node is already focused, it selects the apropiate one depending on key pressed.
-  //     // Otherwise it starts focusing items from the start or the end of the list
-  //     if (focusedIndex !== -1) {
-  //       if (param === 'next') {
-  //         auxArray[focusedIndex].focused = false;
-  //         if (focusedIndex < auxArray.length - 1) {
-  //           auxArray[focusedIndex + 1].focused = true;
-  //         } else {
-  //           auxArray[0].focused = true;
-  //           this.dropdownElem.nativeElement.scrollTop = 0;
-  //         }
-  //       } else if (param === 'prev') {
-  //         auxArray[focusedIndex].focused = false;
-  //         if (focusedIndex > 0) {
-  //           auxArray[focusedIndex - 1].focused = true;
-  //         } else {
-  //           auxArray[auxArray.length - 1].focused = true;
-  //           this.dropdownElem.nativeElement.scrollTop = auxArray.length * 100;
-  //         }
-  //       }
-  //     } else if (param === 'next') {
-  //       auxArray[0].focused = true;
-  //     } else if (param === 'prev') {
-  //       auxArray[auxArray.length - 1].focused = true;
-  //     }
-  //     this.checkSelectedItemPosition(param);
-  //   }
-  // }
-
-  // checkSelectedItemPosition(param) {
-  //   const currentScrollHeight = this.dropdownElem.nativeElement.scrollTop;
-  //   const dropdownHeight = this.dropdownElem.nativeElement.offsetHeight;
-  //   const children = this.dropdownElem.nativeElement.querySelectorAll(
-  //     'span.custom-dropdown-item'
-  //   );
-
-  //   let itemIndex;
-  //   let focused;
-  //   for (let i = 0; i < children.length; i++) {
-  //     if (children[i].className.includes('focused')) {
-  //       focused = children[i];
-  //       itemIndex = i;
-  //     }
-  //   }
-
-  //   if (focused) {
-  //     let trueFocused;
-  //     if (param === 'next') {
-  //       if (itemIndex === children.length - 1) {
-  //         trueFocused = children[0];
-  //       } else {
-  //         trueFocused = focused.nextElementSibling;
-  //       }
-  //     } else {
-  //       if (itemIndex === 0) {
-  //         trueFocused = children[children.length - 1];
-  //         // trueFocused.classList.add('focused');
-  //       } else {
-  //         trueFocused = focused.previousElementSibling;
-  //       }
-  //     }
-  //     const focusedHeight = trueFocused.offsetTop - currentScrollHeight;
-  //     if (focusedHeight > dropdownHeight - Math.floor(dropdownHeight * 0.2)) {
-  //       this.dropdownElem.nativeElement.scrollTop =
-  //         currentScrollHeight + Math.floor(dropdownHeight * 0.8);
-  //     } else if (focusedHeight < 0) {
-  //       this.dropdownElem.nativeElement.scrollTop =
-  //         currentScrollHeight - Math.floor(dropdownHeight * 0.8);
-  //     }
-  //   }
-  // }
 }

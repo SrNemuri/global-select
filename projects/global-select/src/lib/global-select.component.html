@@ -8,15 +8,15 @@
       <span>{{ item.disp }}</span>
     </div>
 
-    <input type="text" id="inputSearch" [(ngModel)]="searchValue" #inputSearch (keyup)="onKeyupFilter(inputSearch.value, $event)"
-      class="form-control w-100" placeholder="..." [disabled]="!itemData || disabled" autocomplete="off"/>
+    <input type="text" id="inputSearch" [(ngModel)]="searchValue" #inputSearch (keydown)="manageKD($event)" (keyup)="onKeyupFilter(inputSearch.value, $event)"
+      class="form-control w-100" placeholder="..." [disabled]="!itemData ||  disabled" autocomplete="off" />
   </div>
   <div class="white-background">
-    <button (click)="log()">LOG</button>
-    <div #dropdownElem class="custom-dropdown hidden" [@dropdown]="hiddenDropdown">
+    <div #dropdownElem class="custom-dropdown hidden" [@dropdown]="hiddenDropdown" scroller>
       <ng-container *ngFor="let collection of collections; let ci = index">
-        <div class="dropdown-item tit pb-1" >
-            <!-- *ngIf="collection.title" -->
+
+        <div class="dropdown-item tit pb-1">
+          <!-- *ngIf="collection.title" -->
           <div class="media d-flex align-items-center pb-2">
             <div class="media-left d-flex align-items-center">
               <span class="seller-ico-bg-color"></span>
@@ -27,13 +27,16 @@
           </div>
         </div>
 
-          <ng-container *ngFor="let item of collection.list; let li = index">
-            <span tabindex="0" (click)="addItem(item)" (keydown)="addItem(item)" [ngClass]="{ focused: !!item.focused }"
-              class="dropdown-item custom-dropdown-item">{{ item.disp }} <input type="hidden" [value]="item[itemData.identifyBy] || (ci + '_' + li)"> </span>
-          </ng-container>
+        <ng-container *ngFor="let item of collection.list; let li = index">
+          <span tabindex="0" (click)="addItem(item)" (focus)="focusItem(item)" (blur)="blurItem()" class="dropdown-item custom-dropdown-item">{{
+            item.disp }} <input type="hidden" [value]="item[itemData.identifyBy] || (ci + '_' + li)">
+          </span>
+        </ng-container>
 
-        <span class="dropdown-item ml-auto text-help" *ngIf="collection.list?.length === 0">No results</span>
+        <span class="dropdown-item ml-auto text-help" *ngIf="collection.list?.length === 0">{{ collection.warning ? collection.warning : (isFiltering ? 'No more
+            results in this category' : 'No results')}}</span>
       </ng-container>
+      <div class="arrow-scroll"><i class="fa fa-angle-double-down" aria-hidden="true"></i></div>
     </div>
   </div>
 </div>
