@@ -175,61 +175,74 @@ export class AppComponent {
     }
   ];
 
-  groupConfig = new Map([
-    [
-      <any>1,
-      {
-        title: 'Hotels',
-        display: function(item) {
-          return `${item.display} - [hotel in ${item.location.city} - (${
-            item.location.country
-          }) - (${item.value})]`;
-        },
-        limit: 2
-      }
-    ],
-    [
-      2,
-      {
-        title: 'Destinations',
-        display: function(item) {
-          return `${item.display} - (${item.value})`;
-        },
-        limit: 2
-      }
-    ],
-    [
-      3,
-      {
-        title: 'Prueba',
-        display: function(item) {
-          return `${item.display} - (${item.value})`;
-        },
-        limit: 2
-      }
-    ],
-    [
-      false,
-      {
-        title: false,
-        display: function(item) {
-          return `${item.display} - (${item.value})`;
-        },
-        limit: 2
-      }
-    ],
-    [
-      '',
-      {
-        title: 'Empty',
-        display: function(item) {
-          return `${item.display} - (${item.value})`;
-        },
-        limit: 2
-      }
-    ]
-  ]);
-
+  configuration1 = {
+    grouping: true,
+    incompatibility: true,
+    generalLimit: 15,
+    groupBy: 'destination',
+    identifyBy: 'value',
+    valueProp: 'value',
+    async: false,
+    groupConfig: new Map([
+      [
+        <any>1,
+        {
+          title: 'Hotels',
+          display: function(item) {
+            return `${item.display} - [hotel in ${item.location.city} - (${
+              item.location.country
+            }) - (${item.value})]`;
+          },
+          limit: 2
+        }
+      ],
+      [
+        2,
+        {
+          title: 'Destinations',
+          display: function(item) {
+            return `${item.display} - (${item.value})`;
+          },
+          limit: 2
+        }
+      ],
+      [
+        3,
+        {
+          title: 'Prueba',
+          display: function(item) {
+            return `${item.display} - (${item.value})`;
+          },
+          limit: 2
+        }
+      ],
+      [
+        false,
+        {
+          title: false,
+          display: function(item) {
+            return `${item.display} - (${item.value})`;
+          },
+          limit: 2
+        }
+      ],
+      [
+        '',
+        {
+          title: 'Empty',
+          display: function(item) {
+            return `${item.display} - (${item.value})`;
+          },
+          limit: 2
+        }
+      ]
+    ]),
+    selectBehavior: {
+      onadd: ['clear', 'close'],
+      onblur: 'clear',
+      onfocus: 'search'
+    }
+  };
   onKeyUpEvent(e) {
     console.log(e);
   }

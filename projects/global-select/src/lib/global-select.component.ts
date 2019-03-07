@@ -10,15 +10,102 @@ import {
   HostListener
 } from '@angular/core';
 
-import { ItemData, SearchGlobalConfig, Collection } from './interfaces';
-import { getDisabled } from './utils/functions';
-import { animationsConfig } from './utils/constants';
+import {
+  trigger,
+  state,
+  style,
+  animate,
+  transition,
+  keyframes
+} from '@angular/animations';
+
+import { GlobalSelectConfiguration, Collection } from './interfaces';
+import { getDisabled, filterArray } from './utils/functions';
 
 @Component({
   selector: 'tgx-global-select',
   templateUrl: './global-select.component.html',
   styleUrls: ['./global-select.component.css'],
-  animations: animationsConfig
+  animations: [
+    trigger('dropdown', [
+      state(
+        'yes',
+        style({
+          transform: 'translateY(-50px)',
+          opacity: 0,
+          display: 'none',
+          pointerEvents: 'none'
+        })
+      ),
+      state(
+        'no',
+        style({
+          transform: 'translateY(0)',
+          opacity: 1,
+          display: 'block',
+          pointerEvents: 'all'
+        })
+      ),
+      transition(
+        'no => yes',
+        animate(
+          150,
+          keyframes([
+            style({
+              transform: 'translateY(0px)',
+              opacity: 1,
+              offset: 0,
+              pointerEvents: 'none'
+            }),
+            style({
+              transform: 'translateY(-10px)',
+              opacity: 0.75,
+              offset: 0.3
+            }),
+            style({
+              transform: 'translateY(-30px)',
+              opacity: 0.1,
+              offset: 0.8
+            }),
+            style({
+              transform: 'translateY(-50px)',
+              opacity: 0,
+              offset: 1
+            })
+          ])
+        )
+      ),
+      transition(
+        'yes => no',
+        animate(
+          150,
+          keyframes([
+            style({
+              transform: 'translateY(-50px)',
+              opacity: 0,
+              offset: 0
+            }),
+            style({
+              transform: 'translateY(-30px)',
+              opacity: 0.5,
+              offset: 0.3
+            }),
+            style({
+              transform: 'translateY(-10px)',
+              opacity: 1,
+              offset: 0.8
+            }),
+            style({
+              transform: 'translateY(0px)',
+              opacity: 1,
+              offset: 1,
+              pointerEvents: 'all'
+            })
+          ])
+        )
+      )
+    ])
+  ]
 })
 export class GlobalSelectComponent implements OnChanges, OnInit {
   // Data variables
@@ -32,9 +119,8 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   @Input() items: any[];
 
   // Component configurations
-  @Input() itemData: ItemData;
+  @Input() configuration: GlobalSelectConfiguration;
   @Input() disabled: boolean;
-  @Input() config: SearchGlobalConfig;
 
   // Animation switches
   hiddenDropdown = 'yes';
@@ -57,7 +143,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   // Behaviour control
   isFiltering: boolean;
 
-  private configurations = {
+  private selectBehavior = {
     closeOnAdd: true,
     clearOnAdd: true,
     clearOnBlur: true,
@@ -127,6 +213,25 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     }
   }
 
+  @HostListener('document:click', ['$event']) detectClickEvent(event) {
+    if (event.path) {
+      const classes = event.path.map(p => p.className || '');
+      if (!classes.includes('dropdown-root')) {
+        this.closeDropdown();
+        if (this.selectBehavior.clearOnBlur) {
+          this.searchValue = '';
+        }
+      } else if (
+        event.target.id === 'inputSearch' &&
+        this.selectBehavior.searchOnFocus &&
+        this.searchValue &&
+        this.searchValue.length > 2
+      ) {
+        this.keyUpEvent.emit(this.searchValue);
+      }
+    }
+  }
+
   constructor() {}
 
   ngOnInit() {
@@ -134,27 +239,39 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     this.configureComponent();
   }
 
-  manageKD(event) {
-    if (event.key === 'Backspace') {
-      // const;
-      // console.log('Backspace', event);
+  ngOnChanges(changes) {
+    if ('items' in changes) {
+      this.filterAvailableItems();
     }
   }
 
   configureComponent() {
-    if (!this.config) {
+    if (!this.configuration.selectBehavior) {
       return;
     }
-    if (this.config.onadd) {
-      this.configurations.closeOnAdd = !this.config.onadd.includes('open');
-      this.configurations.clearOnAdd = !this.config.onadd.includes('keeptext');
+    if (this.configuration.selectBehavior.onadd) {
+      this.selectBehavior.closeOnAdd = !this.configuration.selectBehavior.onadd.includes(
+        'open'
+      );
+      this.selectBehavior.clearOnAdd = !this.configuration.selectBehavior.onadd.includes(
+        'keeptext'
+      );
     }
 
-    if (this.config.onblur) {
-      this.configurations.clearOnBlur = this.config.onblur === 'clear';
+    if (this.configuration.selectBehavior.onblur) {
+      this.selectBehavior.clearOnBlur =
+        this.configuration.selectBehavior.onblur === 'clear';
     }
-    if (this.config.onfocus) {
-      this.configurations.searchOnFocus = this.config.onfocus === 'search';
+    if (this.configuration.selectBehavior.onfocus) {
+      this.selectBehavior.searchOnFocus =
+        this.configuration.selectBehavior.onfocus === 'search';
+    }
+  }
+
+  manageKD(event) {
+    if (event.key === 'Backspace') {
+      // const;
+      // console.log('Backspace', event);
     }
   }
 
@@ -166,31 +283,6 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     this.focusedListElement = undefined;
   }
 
-  decideClosure(event) {
-    if (event.path) {
-      const classes = event.path.map(p => p.className || '');
-      if (!classes.includes('dropdown-root')) {
-        this.closeDropdown();
-        if (this.configurations.clearOnBlur) {
-          this.searchValue = '';
-        }
-      } else if (
-        event.target.id === 'inputSearch' &&
-        this.configurations.searchOnFocus &&
-        this.searchValue &&
-        this.searchValue.length > 2
-      ) {
-        this.keyUpEvent.emit(this.searchValue);
-      }
-    }
-  }
-
-  ngOnChanges(changes) {
-    if ('itemData' in changes) {
-      this.filterAvailableItems();
-    }
-  }
-
   onKeyupFilter(searchValue, event) {
     if (
       searchValue &&
@@ -199,7 +291,11 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       event.key !== 'ArrowDown' &&
       event.key !== 'Enter'
     ) {
-      this.filterAvailableItems();
+      if (this.configuration.async) {
+        this.keyUpEvent.emit(this.searchValue);
+      } else {
+        this.filterAvailableItems();
+      }
     } else if (
       !searchValue ||
       (searchValue && searchValue.length < 3 && event.key === 'Backspace')
@@ -214,36 +310,44 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   filterAvailableItems() {
     if (this.selectedItems.length) {
       const selectedValues = this.selectedItems.map(
-        si => si[this.itemData.valueProp]
+        si => si[this.configuration.valueProp]
       );
 
       this.availableItems = [
         ...this.items.filter(item => {
           const alreadyIn = selectedValues.includes(
-            item[this.itemData.valueProp]
+            item[this.configuration.valueProp]
           );
           let compatible = true;
-          if (this.itemData.incompatibility) {
+          if (this.configuration.incompatibility) {
             compatible = !!this.selectedItems.find(
-              si => si[this.itemData.groupBy] === item[this.itemData.groupBy]
+              si =>
+                si[this.configuration.groupBy] ===
+                item[this.configuration.groupBy]
             );
           }
           return !alreadyIn && compatible;
         })
       ];
+
+      if (!this.configuration.async) {
+        this.availableItems = filterArray(this.searchValue, [
+          ...this.availableItems
+        ]);
+      }
+    } else if ((this.searchValue || '').length >= 3) {
+      this.availableItems = filterArray(this.searchValue, [...this.items]);
     } else {
-      // console.log('no selected items');
-      this.availableItems = [...this.items];
+      this.availableItems = [];
     }
 
     if (
       (!!this.searchValue && this.searchValue.length > 2) ||
       (!!this.searchValue && this.availableItems.length > 0)
     ) {
-      if (this.itemData.grouping) {
+      if (this.configuration.grouping) {
         // console.log('selectedItems', this.selectedItems);
-        // console.log((this.selectedItems[0] || {})[this.itemData.groupBy] || '');
-
+        // console.log((this.selectedItems[0] || {})[this.configuration.groupBy] || '');
         this.filterItems();
       } else {
         this.collections = [{ list: this.availableItems }];
@@ -260,28 +364,22 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   filterItems() {
     // key bloqueante
     const collections = [];
-    const itemKeysConfiguration = Array.from(this.itemData.groupConfig.keys());
+    const itemKeysConfiguration = Array.from(
+      this.configuration.groupConfig.keys()
+    );
 
-    const groupBy = (this.selectedItems[0] || {})[this.itemData.groupBy];
+    const groupBy = (this.selectedItems[0] || {})[this.configuration.groupBy];
     this.isFiltering = groupBy !== undefined;
 
     if (itemKeysConfiguration.length) {
       for (let i = 0; i < itemKeysConfiguration.length; i++) {
-        const groupConfig = this.itemData.groupConfig.get(
+        const groupConfig = this.configuration.groupConfig.get(
           itemKeysConfiguration[i]
         );
 
-        // console.log(
-        //   'groupConfig',
-        //   groupConfig,
-        //   '\nitemKeysConfiguration[i]',
-        //   itemKeysConfiguration[i]
-        // );
-        // Jumps to next iteration if there is anything selected not matching current identifier and if incompatibility is set to true
-
         if (
           this.isFiltering &&
-          this.itemData.incompatibility &&
+          this.configuration.incompatibility &&
           groupBy !== itemKeysConfiguration[i]
         ) {
           continue;
@@ -291,7 +389,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
         const limitReached =
           groupConfig.limit <=
           this.selectedItems.filter(
-            si => si[this.itemData.groupBy] === itemKeysConfiguration[i]
+            si => si[this.configuration.groupBy] === itemKeysConfiguration[i]
           ).length;
 
         if (groupConfig) {
@@ -300,7 +398,9 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
             collection = {
               title: groupConfig.title || 'Not defined',
               list: this.availableItems.filter(ai => {
-                if (ai[this.itemData.groupBy] === itemKeysConfiguration[i]) {
+                if (
+                  ai[this.configuration.groupBy] === itemKeysConfiguration[i]
+                ) {
                   ai['disp'] = groupConfig.display(ai);
                   return true;
                 }
@@ -313,8 +413,6 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
               warning: 'Selection limit reached'
             };
           }
-          // if (collection.list.length) {
-          // }
           collections.push(collection);
         }
       }
@@ -340,11 +438,11 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     const clone = JSON.parse(JSON.stringify(item));
     this.selectedItems.push(clone);
     this.filterAvailableItems();
-    if (this.configurations.closeOnAdd) {
+    if (this.selectBehavior.closeOnAdd) {
       this.closeDropdown();
       this.dropdownElem.nativeElement.scrollTop = 0;
     }
-    if (this.configurations.clearOnAdd) {
+    if (this.selectBehavior.clearOnAdd) {
       this.searchValue = '';
     }
 
@@ -394,7 +492,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   startRemoving(target) {
     if (this.selectedItems.length) {
       if (
-        !target[this.itemData.valueProp] &&
+        !target[this.configuration.valueProp] &&
         !this.selectedItems.find(si => si.toBeRemoved)
       ) {
         this.selectedItems[this.selectedItems.length - 1].toBeRemoved = true;
