@@ -1,0 +1,41 @@
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<!-- (keyUpEvent)="" (itemSelected)="" -->
+
+
+<div style="width:100%">
+  <tgx-global-select [items]="info" [itemData]="{
+    grouping: true,
+    incompatibility: true,
+    generalLimit: 15,
+    groupBy: 'destination',
+    identifyBy: 'value',
+    valueProp: 'value',
+    groupConfig: groupConfig
+  }"
+    [config]="{ onadd: ['clear', 'close'], onblur: 'clear', onfocus: 'search' }" [disabled]="false"
+    (keyUpEvent)="onKeyUpEvent($event)" (itemSelected)="onItemSelected($event)"></tgx-global-select>
+</div>
+
+<!--
+<div style="width:100%">
+  <tgx-global-select [itemData]="{
+    items: info,
+    grouping: false,
+    groupBy: 'destination',
+    identifyBy: 'value',
+    groupConfig: groupConfig
+  }"
+    [config]="{ onadd: ['clear', 'close'], onblur: 'clear', onfocus: 'search' }" [disabled]="false"></tgx-global-select>
+</div> -->
+
+<!-- <div style="width:100%">
+  <tgx-global-select [itemData]="{
+    items: info,
+    grouping: true,
+    groupBy: 'destination',
+    identifyBy: 'value',
+    groupConfig: groupConfig
+  }"
+    [config]="{ onadd: ['clear', 'close'], onblur: 'clear', onfocus: 'search' }" [disabled]="false"></tgx-global-select>
+</div> -->

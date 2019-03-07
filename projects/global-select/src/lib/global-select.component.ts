@@ -10,101 +10,15 @@ import {
   HostListener
 } from '@angular/core';
 
-import {
-  trigger,
-  state,
-  style,
-  animate,
-  transition,
-  keyframes
-} from '@angular/animations';
 import { ItemData, SearchGlobalConfig, Collection } from './interfaces';
 import { getDisabled } from './utils/functions';
+import { animationsConfig } from './utils/constants';
 
 @Component({
   selector: 'tgx-global-select',
   templateUrl: './global-select.component.html',
   styleUrls: ['./global-select.component.css'],
-  animations: [
-    trigger('dropdown', [
-      state(
-        'yes',
-        style({
-          transform: 'translateY(-50px)',
-          opacity: 0,
-          display: 'none',
-          pointerEvents: 'none'
-        })
-      ),
-      state(
-        'no',
-        style({
-          transform: 'translateY(0)',
-          opacity: 1,
-          display: 'block',
-          pointerEvents: 'all'
-        })
-      ),
-      transition(
-        'no => yes',
-        animate(
-          150,
-          keyframes([
-            style({
-              transform: 'translateY(0px)',
-              opacity: 1,
-              offset: 0,
-              pointerEvents: 'none'
-            }),
-            style({
-              transform: 'translateY(-10px)',
-              opacity: 0.75,
-              offset: 0.3
-            }),
-            style({
-              transform: 'translateY(-30px)',
-              opacity: 0.1,
-              offset: 0.8
-            }),
-            style({
-              transform: 'translateY(-50px)',
-              opacity: 0,
-              offset: 1
-            })
-          ])
-        )
-      ),
-      transition(
-        'yes => no',
-        animate(
-          150,
-          keyframes([
-            style({
-              transform: 'translateY(-50px)',
-              opacity: 0,
-              offset: 0
-            }),
-            style({
-              transform: 'translateY(-30px)',
-              opacity: 0.5,
-              offset: 0.3
-            }),
-            style({
-              transform: 'translateY(-10px)',
-              opacity: 1,
-              offset: 0.8
-            }),
-            style({
-              transform: 'translateY(0px)',
-              opacity: 1,
-              offset: 1,
-              pointerEvents: 'all'
-            })
-          ])
-        )
-      )
-    ])
-  ]
+  animations: animationsConfig
 })
 export class GlobalSelectComponent implements OnChanges, OnInit {
   // Data variables
@@ -114,9 +28,12 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   collections: Collection[] = [];
   getDisabled = getDisabled;
 
+  // Data
+  @Input() items: any[];
+
+  // Component configurations
   @Input() itemData: ItemData;
   @Input() disabled: boolean;
-  // Component configurations
   @Input() config: SearchGlobalConfig;
 
   // Animation switches
@@ -133,11 +50,11 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   @ViewChild('dropdownElem') dropdownElem: ElementRef;
   @ViewChild('globalSelectElement') globalSelectElement: ElementRef;
 
-  //Focus management
+  // Focus management
   focusedListElement: any;
   focusedSelectedElement: any;
 
-  //Behaviour control
+  // Behaviour control
   isFiltering: boolean;
 
   private configurations = {
@@ -301,7 +218,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       );
 
       this.availableItems = [
-        ...this.itemData.items.filter(item => {
+        ...this.items.filter(item => {
           const alreadyIn = selectedValues.includes(
             item[this.itemData.valueProp]
           );
@@ -316,7 +233,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       ];
     } else {
       // console.log('no selected items');
-      this.availableItems = [...this.itemData.items];
+      this.availableItems = [...this.items];
     }
 
     if (
