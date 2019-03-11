@@ -43,7 +43,6 @@ div.tb-removed:hover {
 
 input#inputSearch {
   padding: 0.9rem;
-  border: none;
 }
 input#inputSearch:focus {
   border-bottom: 2px solid #0275d8;

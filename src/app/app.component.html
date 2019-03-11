@@ -2,10 +2,24 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 <!-- (keyUpEvent)="" (itemSelected)="" -->
 
+<div class="row">
+<div class="col-6">
 
-<div style="width:100%">
-  <tgx-global-select [items]="info" [configuration]="configuration1" [disabled]="false" (keyUpEvent)="onKeyUpEvent($event)" (itemSelected)="onItemSelected($event)"></tgx-global-select>
+  <h3>Config 1</h3>
+  <tgx-global-select [items]="info" [configuration]="configuration1" [default]="default" [disabled]="false" (keyUpEvent)="onKeyUpEvent($event)" (itemSelected)="onItemSelected($event)"></tgx-global-select>
 </div>
+
+
+<div class="col-6">
+<h3>Config 2</h3>
+<tgx-global-select [items]="info" [configuration]="configuration2" [disabled]="false" (keyUpEvent)="onKeyUpEvent($event)" (itemSelected)="onItemSelected($event)"></tgx-global-select>
+
+  </div>
+
+<div class="col-6">
+
+</div>
+  </div>
 
 <!--
 <div style="width:100%">

@@ -7,26 +7,37 @@ export function getDisabled(variableToTest: any, actualClass: string): string {
   return !variableToTest ? 'disabled ' + actualClass : actualClass;
 }
 
-export function filterArray(search, items) {
+export function filterArray(search, items): any | any[] {
+  if(!search){
+    return true;
+  }
   const searchUpper = search.toUpperCase();
-  return items.filter(item => {
-    const itemType = <string>typeof item;
 
-    if (itemType === 'Object' || !(item instanceof Array)) {
-      const keys = Object.keys(item);
-      for (const key of keys) {
-        if (typeof item[key] === 'string' || typeof item[key] === 'number') {
-          if (('' + item[key]).toUpperCase().includes(searchUpper)) {
-            return true;
-          }
+  if (items instanceof Array) {
+    // SEGUIR AQUI
+    return items.filter(item => compare(searchUpper, item));
+  } else {
+    return compare(searchUpper, items);
+  }
+}
+
+function compare(searchUpper, item) {
+  const itemType = <string>typeof item;
+
+  if (itemType === 'Object' || !(item instanceof Array)) {
+    const keys = Object.keys(item);
+    for (const key of keys) {
+      if (typeof item[key] === 'string' || typeof item[key] === 'number') {
+        if (('' + item[key]).toUpperCase().includes(searchUpper)) {
+          return true;
         }
       }
-    } else if (itemType === 'string' || itemType === 'number') {
-      return ('' + item).toUpperCase().includes(searchUpper);
     }
+  } else if (itemType === 'string' || itemType === 'number') {
+    return ('' + item).toUpperCase().includes(searchUpper);
+  }
 
-    return false;
-  });
+  return false;
 }
 
 export function compareStrings(a, b) {

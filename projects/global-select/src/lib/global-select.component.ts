@@ -120,6 +120,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
 
   // Component configurations
   @Input() configuration: GlobalSelectConfiguration;
+  @Input() default: any[];
   @Input() disabled: boolean;
 
   // Animation switches
@@ -241,6 +242,23 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
 
   ngOnChanges(changes) {
     if ('items' in changes) {
+      if (this.default) {
+        if (this.selectedItems) {
+          this.default.map(d => {
+            if (
+              !this.selectedItems.find(
+                s =>
+                  d[this.configuration.identifyBy] ===
+                  s[this.configuration.identifyBy]
+              )
+            ) {
+              this.selectedItems.push(d);
+            }
+          });
+        } else {
+          this.selectedItems = this.default;
+        }
+      }
       this.filterAvailableItems();
     }
   }
@@ -308,7 +326,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   //  * Filters
   //  */
   filterAvailableItems() {
-    if (this.selectedItems.length) {
+    if ((this.selectedItems || []).length) {
       const selectedValues = this.selectedItems.map(
         si => si[this.configuration.valueProp]
       );
@@ -346,10 +364,10 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       (!!this.searchValue && this.availableItems.length > 0)
     ) {
       if (this.configuration.grouping) {
-        // console.log('selectedItems', this.selectedItems);
-        // console.log((this.selectedItems[0] || {})[this.configuration.groupBy] || '');
-        this.filterItems();
+        this.isFiltering === !!this.configuration.groupBy;
+        this.filterItemsGroups();
       } else {
+        console.log('ELSE');
         this.collections = [{ list: this.availableItems }];
       }
       this.openDropdown();
@@ -361,7 +379,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
   /**
    * Filters items if grouping parameter is set to true
    */
-  filterItems() {
+  filterItemsGroups() {
     // key bloqueante
     const collections = [];
     const itemKeysConfiguration = Array.from(
@@ -370,7 +388,7 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
 
     const groupBy = (this.selectedItems[0] || {})[this.configuration.groupBy];
     this.isFiltering = groupBy !== undefined;
-
+    console.log(this.isFiltering);
     if (itemKeysConfiguration.length) {
       for (let i = 0; i < itemKeysConfiguration.length; i++) {
         const groupConfig = this.configuration.groupConfig.get(
@@ -450,39 +468,10 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
     this.itemSelected.emit(this.selectedItems);
   }
 
-  addItemWithEnter() {
-    const auxArray = [...this.availableItems];
-    const item = auxArray.find(a => a.focused);
-    if (item) {
-      this.addItem(item);
-    }
-  }
-
   removeItem(index) {
     this.selectedItems.splice(index, 1);
     this.filterAvailableItems();
   }
-
-  /**
-   * Catches event key. Triggers certain functions based on the key pressed
-   * @param event
-   */
-  // selectActionByKey(event) {
-  //   switch (event.key) {
-  //     case 'Backspace':
-  //       this.startRemoving(event.target);
-  //       break;
-  //     case 'ArrowDown':
-  //       this.focusItemFromList('next');
-  //       break;
-  //     case 'ArrowUp':
-  //       this.focusItemFromList('prev');
-  //       break;
-  //     case 'Enter':
-  //       this.addItemWithEnter();
-  //       break;
-  //   }
-  // }
 
   /**
    * Starts the removal process. If backspace key is pressed, las item from list is marked for deletion.
