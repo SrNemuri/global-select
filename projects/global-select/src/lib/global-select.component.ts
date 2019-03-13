@@ -242,6 +242,8 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
 
   ngOnChanges(changes) {
     if ('items' in changes) {
+      this.filterAvailableItems();
+    } else if ('deafult' in changes) {
       if (this.default) {
         if (this.selectedItems) {
           this.default.map(d => {
@@ -258,8 +260,8 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
         } else {
           this.selectedItems = this.default;
         }
+        this.filterAvailableItems();
       }
-      this.filterAvailableItems();
     }
   }
 
@@ -330,6 +332,10 @@ export class GlobalSelectComponent implements OnChanges, OnInit {
       const selectedValues = this.selectedItems.map(
         si => si[this.configuration.valueProp]
       );
+
+      if(this.default && !this.items){
+        return;
+      }
 
       this.availableItems = [
         ...this.items.filter(item => {
